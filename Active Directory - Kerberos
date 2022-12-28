@@ -1,0 +1,132 @@
+########################################################
+	      Active Directory - Kerberos
+########################################################
+
+Z6@a&CHhmk
+
+# In AWS console launch an instance for AD
+Windows_Server-2012-R2_RTM-English-64Bit-Base-2018.01.12
+
+# Log in to windows server
+
+
+Open server manager
+
+## Add active directory domain services
+
+Add roles and features
+
+Tick - Role based and feature based installation
+
+Tick - Select a server from server pool
+
+Tick - Active directory domain services
+
+Tick - Restart the destination server automatically if required
+
+ 
+## Configure AD as domain controller
+
+Tick on notifications flag
+
+Select - Promote this server to a domain controller
+
+Select - Add new forest
+Root domain name : hadoop.com
+
+Set passowrd
+
+Select defaults till install button
+
+
+## Add active directory as certificate service
+
+Open server manager
+
+Add roles and features
+
+Tick - Role based and feature based installation
+
+Tick - Select a server from server pool
+
+Tick - Active directory certificate services
+
+In roles and services, select - certification authority
+
+Tick - Restart the destination server automatically if required
+
+
+Tick on notifications flag
+
+Select - Configure active directory certificate service on the destination server 
+
+In roles service, select - certification authority 
+
+Setup typr - enterprise CA
+
+CA type - root CA
+
+Private key - create new private key
+
+Select defaults till configure button
+
+
+## Creating users
+
+Click on Windows button -> Administrative tools
+
+Select Active directory users and computers
+
+Right click on hadoop.com -> new -> organisational unit
+
+give name - cloudera
+
+Create another ou
+
+give name - adminact
+
+Right click on admin act -> new -> user
+
+create user - cmadmin
+set password
+
+## Delegate controls to cmadmin
+
+Right click on cloudera -> delegate control
+
+click add button
+
+search for cmadmin
+
+Select all the tasks to delegate
+
+
+## Reboot the system (Other planned)
+
+
+-----**** Installing kerberos clients and LDAP libraries ****-----
+
+
+sudo apt-get install ldap-utils
+
+
+sudo apt-get install krb5-user -y
+(Enter realm as HADOOP.COM
+ kdc and admin server - private-dns of AD server)
+
+## Perform above two commands on all hosts
+
+
+------**** Enable AD kerberos ****-----
+
+
+Go to CM host
+
+Administration -> Security -> Enable Kerberos
+
+Active Directory Delete Accounts on Credential Regeneration - tick it
+
+Give ou - cloudera
+
+Manage krb5.conf using cloudera - tick it
+
