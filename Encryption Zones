@@ -1,0 +1,49 @@
+#################################################
+		Encryption Zones
+#################################################
+
+
+
+In CM -> Add KMS service
+
+Add user and group as kms and genrate ACl
+
+Restart Cluster
+
+Create principal for kms user
+
+
+-- Create the key --
+
+su kms
+
+hadoop key list
+
+hadoop key create mykey
+
+hadoop key list
+
+
+-- Create encrypted zone --
+
+hdfs dfs -mkdir /zone1
+
+hdfs crypto -createZone -keyName mykey -path /zone1
+
+hdfs dfs -put abcd /zone1
+
+
+-- Put data in encrypted zone --
+
+kinit -p kms
+
+hdfs dfs -put abcd /zone1
+
+hdfs dfs -ls /zone1
+
+hdfs dfs -cat /zone1/abcd  
+
+--> try accessing from other user
+
+hdfs dfs -cat /zone1/abcd  
+
