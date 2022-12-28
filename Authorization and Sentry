@@ -1,0 +1,160 @@
+#############################
+	Authorization
+#############################
+
+
+
+## HDFS adopts the authorization scheme common to POSIX cmpatible filesystem
+
+## Enabling extended ACl's in hdfs
+
+-> Goto CM
+-> HDFS -> Configurations -> search - acl
+-> Enable Access Control Lists    tick the check box(set it to true)
+   dfs.namenode.acls.enabled
+-> Restart HDFS service
+
+
+## On terminal
+
+hdfs dfs -mkdir -p /data/userc
+hdfs dfs -chown userc:dev /data/userc
+hdfs dfs -ls /data
+
+hdfs dfs -getfacl /data/userc
+
+hdfs dfs -setfacl -m user:usera:r-x /data/userc
+hdfs dfs -setfacl -m group:testers:rwx /data/userc
+hdfs dfs -getfacl /data/userc
+
+hdfs dfs -chmod 750 /data/userc
+hdfs dfs -getfacl /data/userc
+
+hdfs dfs -setfacl -b /data/userc
+hdfs dfs -getfacl /data/userc
+
+
+## setfacl command and its options
+hdfs dfs -setfacl [-R] [-b|-k -m|-x <acl_spec> <path>]|[--set <acl_spec> <path>]
+
+<!-- COMMAND OPTIONS
+<path>: Path to the file or directory for which ACLs should be set.
+-R: Use this option to recursively list ACLs for all files and directories.
+-b: Revoke all permissions except the base ACLs for user, groups and others.
+-k: Remove the default ACL.
+-m: Add new permissions to the ACL with this option. Does not affect existing permissions.
+-x: Remove only the ACL specified.
+<acl_spec>: Comma-separated list of ACL permissions.
+--set: Use this option to completely replace the existing ACL for the path specified. 
+       Previous ACL entries will no longer apply.
+-->
+
+
+## Enabling sticky bits
+
+hdfs dfs -chmod +t /data
+hdfs dfs -ls / | grep data
+
+
+
+
+
+##########################
+	Sentry
+##########################
+
+
+## In KDC add principal for hive
+
+sudo kadmin.local
+addprinc hive
+quit
+
+
+## Go to any node
+
+kinit -p user1
+
+$ beeline
+beeline> !connect jdbc:hive2://ip-172-31-64-242.ec2.internal:10000/default;principal=hive/ip-172-31-64-242.ec2.internal@HADOOP.COM
+
+create database database1;
+
+drop database database1;
+
+create table test(a string);
+
+drop table test;
+
+
+## Locking down hive warehouse directory
+
+hdfs dfs -chown -R hive:hive /user/hive/warehouse
+hdfs dfs -chmod -R 0771 /user/hive/warehouse
+
+## Configuring sentry service for authorization
+
+## Go to CM
+
+Add service sentry
+
+After senrty is started
+Goto -> Hive -> configurations -> Tick sentry service
+In search -> impersonation -> uncheck hiveserver2 impersonation
+Bootstrap admin in sentry : Goto sentry -> Admin groups -> Add "Admin"
+
+Restart stale configurations
+
+To set server name for hiveservice in sentry 
+modify the Hive property, 'Server Name for Sentry Authorization', in the Service-Wide > Advanced category to 'server1'
+
+
+## Go to terminal
+
+$ beeline
+beeline> !connect jdbc:hive2://ip-172-31-64-242.ec2.internal:10000/default;principal=hive/ip-172-31-64-242.ec2.internal@HADOOP.COM
+
+show databases;
+
+show tables;
+
+create database database1;
+
+kdestroy
+
+
+kinit hive
+
+beeline
+beeline> !connect jdbc:hive2://ip-172-31-64-242.ec2.internal:10000/default;principal=hive/ip-172-31-64-242.ec2.internal@HADOOP.COM
+
+create role admin_role;
+grant all on server server1 to role admin_role;
+grant all on database default to role admin_role;
+grant role admin_role to group hive;
+show tables;
+
+
+create table test(a string);
+create table sample1(name string, phone int);
+create table sample2(name string, phone int);
+
+create role analyst;
+grant select on table sample1 to role analyst;
+grant role analyst to group userb;
+
+
+create role developer;
+grant select on sample2 to role developer;
+grant role developer to group user2;
+
+
+## Go to CM -> Hue webUI
+Create userb and user2 in Hue
+
+Try logging in as userb then as user2
+Go to hive interface
+
+
+
+
