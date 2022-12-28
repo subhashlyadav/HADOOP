@@ -1,0 +1,189 @@
+******************************************************************
+		Cloudera Enterprise - Deployment
+******************************************************************
+
+Start a instance with minimum 8 GB ram (preferably m4.large)
+
+In seccurity group - Select "Default" security group
+
+Edit Deafult security group as below
+all traffic - your-ip/32
+
+
+-----*** SSH in to the instance you created ***-----
+$ ssh -i /path/to/key_file.pem ubuntu@instance_hostname
+
+
+-----*** Update the server ***-----
+$ sudo apt-get update && sudo apt-get dist-upgrade -y
+
+-----*** Disable transparent huge pages ***-----
+$ sudo nano /etc/rc.local
+## Add these lines:
+
+if test -f /sys/kernel/mm/transparent_hugepage/enabled; then
+    echo never > /sys/kernel/mm/transparent_hugepage/enabled
+fi
+
+if test -f /sys/kernel/mm/transparent_hugepage/defrag; then
+    echo never > /sys/kernel/mm/transparent_hugepage/defrag
+fi
+
+$sudo -i
+
+$source /etc/rc.local 
+
+-----*** Install NTP ***-----
+$ sudo apt-get install ntp -y 
+$ sudo service ntp status
+## If it isn't running 
+$ sudo service ntp start 
+
+
+-----*** Set Swappiness ***-----
+sudo sysctl -a | grep vm.swappiness
+sudo sysctl vm.swappiness=1
+echo 'vm.swappiness=1' | sudo tee --append /etc/sysctl.conf
+
+
+### Note : Now, save the instance to an image, call it â€œCloudera Managerâ€ Make sure to 
+check â€œNo rebootâ€
+
+
+##### Configuring a local package repository #####
+
+---** Setup web server **---
+
+$ sudo apt-get install apache2 -y
+
+$ sudo nano /etc/apache2/apache2.conf
+
+<IfModule mime_module>
+    #
+    # TypesConfig points to the file containing the list of mappings from
+    # filename extension to MIME-type.
+    #
+    TypesConfig /etc/mime.types
+
+    #
+    # AddType allows you to add to or override the MIME configuration
+    # file specified in TypesConfig for specific file types.
+    #
+    #AddType application/x-gzip .tgz
+    #
+    # AddEncoding allows you to have certain browsers uncompress
+    # information on the fly. Note: Not all browsers support this.
+    #
+    #AddEncoding x-compress .Z
+    #AddEncoding x-gzip .gz .tgz
+    #
+    # If the AddEncoding directives above are commented-out, then you
+    # probably should define those extensions to indicate media types:
+    #
+    AddType application/x-compress .Z
+    AddType application/x-gzip .gz .tgz .parcel
+
+    #
+    # AddHandler allows you to map certain file extensions to "handlers":
+    # actions unrelated to filetype. These can be either built into the server
+    # or added with the Action directive (see below)
+    #
+    # To use CGI scripts outside of ScriptAliased directories:
+    # (You will also need to add "ExecCGI" to the "Options" directive.)
+    #
+    #AddHandler cgi-script .cgi
+
+    # For type maps (negotiated resources):
+    #AddHandler type-map var
+
+    #
+    # Filters allow you to process content before it is sent to the client.
+    #
+    # To parse .shtml files for server-side includes (SSI):
+    # (You will also need to add "Includes" to the "Options" directive.)
+    #
+    AddType text/html .shtml
+    AddOutputFilter INCLUDES .shtml
+</IfModule>
+
+
+$ sudo service apache2 restart
+
+$ sudo mkdir -p /var/www/html/cloudera-repos/cm6
+
+----*** Download the Cloudera Manager Repo tarball ***----
+
+$ wget tarball
+
+$ sudo tar xvfz cm6.3.3-ubuntu1604.tar.gz -C /var/www/html/cloudera-repos/cm6 --strip-components=1
+
+$ sudo chmod -R ugo+rX /var/www/html/cloudera-repos/cm6
+
+----*** Seting up internal repository ***----
+
+$ sudo nano /etc/apt/sources.list.d/cloudera-repo.list
+deb [trusted=yes] http://<private-ip>/cloudera-repos/cm6 xenial-cm6 contrib 
+
+$ sudo apt-get update 
+
+>>if you see : GPG error .... NO_PUBKEY then
+sudo apt-key adv --recv-key --keyserver keyserver.ubuntu.com 73985D43B0B19C9F
+
+$ sudo apt-get update 
+
+
+##### Install Cloudera Manager server software #####
+
+---** Install Oracle JDK **---
+
+$ sudo apt-get install oracle-j2sdk1.8 -y
+
+---** Install Cloudera Manager packages **---
+
+$ sudo apt-get install cloudera-manager-daemons cloudera-manager-agent cloudera-manager-server -y
+
+$ sudo apt-get install cloudera-manager-server-db-2 -y
+
+$ sudo service cloudera-scm-server-db start
+
+---** Start Cloudera Manager server **---
+
+$ sudo service cloudera-scm-server start
+
+---** Start Cloudera Manager agent **---
+
+$ sudo service cloudera-scm-agent start
+
+$ sudo service cloudera-scm-agent status
+
+
+##### Setup custom CDH repository #####
+
+
+>> Dowload parcel,sha and manifest file and move them to Local parcel repository
+
+$ cd /opt/cloudera/parcel-repo/
+
+$ ll
+
+$ sudo chown cloudera-scm:cloudera-scm CDH-6.3.3-1.cdh6.3.3.p0.1796617-xenial.parcel
+
+$ sudo chown cloudera-scm:cloudera-scm CDH-6.3.3-1.cdh6.3.3.p0.1796617-xenial.parcel.sha
+
+$ sudo chown cloudera-scm:cloudera-scm manifest.json
+
+$ cd
+
+---** Restart Cloudera manager server **---
+
+sudo service cloudera-scm-server restart
+
+## Login to CM web UI on 7180
+
+Continue installation on WebUi
+
+
+## Run a test job
+
+yarn jar /opt/cloudera/parcels/CDH/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar pi 10 100
+
