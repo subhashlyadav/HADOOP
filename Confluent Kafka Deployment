@@ -1,0 +1,41 @@
+###############################################################
+		Confluent Kafka Deployment
+###############################################################
+
+
+---** Update the system **---
+ sudo apt-get update
+
+---** Install Java **---
+ sudo apt-get install default-jdk -y
+
+---** Donwload and install Confluent Platform **---
+
+ wget https://packages.confluent.io/archive/6.1/confluent-6.1.0.tar.gz?_ga=2.163420348.1874499506.1618065652-388302259.1592902752
+ 
+ mv confluent-6.1.0.tar.gz\?_ga\=2.163420348.1874499506.1618065652-388302259.1592902752 confluent-6.1.0.tar.gz
+
+ tar -xzf confluent-6.1.0.tar.gz
+
+ sudo mv confluent-6.1.0 /usr/local/kafka
+
+ sudo chown ubuntu:ubuntu -R /usr/local/kafka/
+
+---** Set environment variable **---
+
+ nano .bashrc
+export CONFLUENT_HOME=/usr/local/kafka
+export PATH=$PATH:$CONFLUENT_HOME/bin
+
+ source .bashrc
+
+---** Install Confluent Hub & Kafka Connect Datagen source **---
+
+ confluent-hub install    --no-prompt confluentinc/kafka-connect-datagen:latest
+ 
+---** Start Confluent Platform **---
+
+ confluent local services start
+
+
+
