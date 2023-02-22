@@ -1,0 +1,108 @@
+**************************
+	  Sqoop
+**************************
+
+
+-----*** Install database to import data ***-----
+
+sudo apt-get install mysql-server -y
+
+-----*** Download sample database ***-----
+
+wget http://www.mysqltutorial.org/wp-content/uploads/2018/03/mysqlsampledatabase.zip
+
+sudo apt install zip
+
+unzip mysqlsampledatabase.zip
+
+-----*** Load sample data to database ***-----
+
+mysql -u root -p <mysqlsampledatabase.sql
+
+mysql -u root -p
+
+mysql>show databases;
+
+### Change bind address of database
+
+cd /etc/mysql/mysql.conf.d/
+
+sudo nano mysqld.cnf
+bind address = <private-ip of db>
+
+sudo service mysql restart
+
+
+-----*** Create a user for sqoop ***-----
+
+mysql>create user 'sqoopuser'@'%' identified by 'password';
+
+mysql>grant all privileges on *.* to 'sqoopuser'@'%';
+
+
+-----*** Sqoop ***-----
+
+
+### Log in to one of the datanodes
+
+$ sqoop help
+
+### Install driver
+
+sudo apt-get install libmysql-java
+
+### Check connection to database
+
+$ sqoop list-databases --connect jdbc:mysql://<database_dns>:3306/ --username sqoopuser -P
+
+$ sqoop list-tables --connect jdbc:mysql://<database_dns>:3306/classicmodels --username sqoopuser -P
+
+sqoop list-tables --connect jdbc:mysql://ip-172-31-26-71.us-west-2.compute.internal:3306/classicmodels --username sqoopuser -P
+
+
+-----*** Sqoop Import ***-----
+
+sqoop import --connect jdbc:mysql://<database_dns>:3306/classicmodels --username sqoopuser --password password --table employees -m 1
+
+sqoop import --connect jdbc:mysql://<database_dns>:3306/classicmodels --username sqoopuser --password password --table employees -m 1 --target-dir /user/hdfs/new/
+
+sqoop import --connect jdbc:mysql://<database_dns>:3306/classicmodels --username sqoopuser --password password --table employees --create-hive-table --hive-import --target-dir /user/hdfs/emphive/
+
+sqoop import --connect jdbc:mysql://ip-172-31-26-71.us-west-2.compute.internal:3306/classicmodels --username sqoopuser --password password --table employees --create-hive-table --hive-import --target-dir /user/hdfs/emphive/
+
+
+-----*** Sqoop Export ***-----
+
+## NOTE : It is mandatory that the table to be exported is created manually and is present in the database from where it has to be exported.
+
+### Create table in destination database
+
+mysql -u root -p
+
+mysql>use classicmodels;
+
+mysql>create table export like employees;
+
+
+
+###
+
+sqoop export --connect jdbc:mysql://<database_dns>:3306/classicmodels --username sqoopuser --password password --table export --export-dir /user/hdfs/employees/
+
+
+### Check data in database
+
+mysql -u root -p
+
+mysql> select * from export;
+
+
+
+
+
+
+
+
+
+
+
