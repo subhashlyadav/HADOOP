@@ -1,0 +1,43 @@
+******************************************
+	Erasure Coding Commands
+******************************************
+
+
+--## Switch to hdfs user
+
+## First put data on a normal directory
+
+## Create a directory for enabling ersure coding
+
+## Checking EC policies on cluster
+
+$ hdfs ec -listPolicies
+
+## Checking default policy
+
+-> Go to CM -> under hdfs -> configuration -> search - dfs.namenode.ec.system.default.policy
+
+## Set policy on our directory
+
+$ hdfs ec -setPolicy -path /path/to/dir
+
+## Enable XOR policy
+
+$ hdfs ec -enablePolicy -policy XOR-2-1-1024k
+
+## Set the EC policy on our directory
+
+$ hdfs ec -setPolicy -path /path/to/dir -policy XOR-2-1-1024k
+
+## Check data
+
+$ hdfs dfs -ls
+
+## Checking the block status on an erasure-coded directory
+
+$ hdfs fsck /path/to/dir
+
+## ISA-L status
+
+$ hadoop checknative
+
