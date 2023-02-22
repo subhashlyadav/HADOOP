@@ -1,0 +1,123 @@
+############################################
+	Kerberos Installation
+############################################
+
+
+## Install kerberos KDC and Admin server
+## On Cm host install kdc and admin server
+
+$ sudo apt-get install -y rng-tools
+
+$ sudo apt install krb5-kdc krb5-admin-server
+
+For realm give : HADOOP.COM
+Kerberos server for your realm : <private-dns-of-cm>
+
+$ sudo krb5_newrealm
+
+## Check the krb5.conf
+nano /etc/krb5.conf
+
+
+$ sudo kadmin.local
+addprinc cm/admin
+quit
+
+sudo nano /etc/krb5kdc/kadm5.acl
+cm/admin@HADOOP.COM        *
+
+sudo /etc/init.d/krb5-admin-server restart
+
+
+
+sudo kadmin.local
+addprinc user1
+
+## Check kdc.conf for kdc configurations
+
+/usr/share/doc/krb5-kdc/examples/kdc.conf
+
+
+
+## Intall kerberos clients
+
+
+sudo apt-get install krb5-user libpam-krb5 libpam-ccreds auth-client-config
+
+Note : Provide the KDC realm and servers hostname properly
+
+
+kinit -p user1
+
+klist
+
+
+#### Troubleshooting
+
+If you see entropythreshold issue in CM fire below command on CM host
+
+$ sudo apt-get install -y rng-tools
+
+## Download JCE(Java Cryptography extension) jar and copy it to proper location
+(Do this if you have not installed JCE jar during CM installation)
+
+on local machine:
+wget -c http://download.oracle.com/otn-pub/java/jce/7/UnlimitedJCEPolicyJDK7.zip
+
+scp -i key.pem UnlimitedJCEPolicy/US_export_policy.jar ubuntu@ip:/usr/lib/jvm/java-7-oracle-cloudera/jre/lib/security/
+
+(Do this for all hosts)
+
+
+## Open a new terminal on you local machine
+
+chmod +x clustercmd.sh
+
+./clustercmd.sh sudo useradd userb -u 1006
+./clustercmd.sh sudo useradd userc -u 1007
+./clustercmd.sh sudo useradd admin -u 1008
+./clustercmd.sh sudo useradd user2 -u 1009
+
+$ cat > cm
+<pu-dns-of-cm>
+
+$ ssh -i rafiq.pem ubuntu@$(cat cm)
+
+## Create a principal for hdfs superuser
+
+sudo kadmin.local
+addprinc hdfs@HADOOP.com
+
+## Create principal for other users
+
+addprinc usera
+addprinc userb
+addprinc admin
+addprinc user2
+addprinc userc
+
+##Go to any node 
+
+kinit -p hdfs 
+
+hdfs dfs -mkdir /user/jango
+
+
+## Kerberos Commands
+
+-> Adding principal
+addprinc prinname
+
+-> Deleting Principal
+delprinc princname
+
+-> Listing all principals
+listprincs
+
+-> Getting information about a particular principal
+getprinc princname
+
+-> Change password for particular principal
+cpw princname
+
+
