@@ -1,0 +1,40 @@
+*********************************************************************
+		Deploying a Hadoop cluster with EMR
+*********************************************************************
+
+
+# Create a S3 bucket (eg - emr-bucket)
+
+# Create a logs folder in bucket
+
+# Goto Service -> EMR
+
+# Create Cluster
+
+# Click Advanced options
+
+# Under add steps - select -> streaming program
+
+# Click configure
+
+# In the name field enter "word count"
+
+# In the mapper field enter,
+
+s3://elasticmapreduce/samples/wordcount/wordSplitter.py
+
+# In the reducer field enter
+
+aggregate
+
+# in the input field enter
+
+s3://elasticmapreduce/samples/wordcount/input
+
+# In the output field enter
+
+s3://<bucket-name>/<output-folder>/
+
+
+# Click add
+
